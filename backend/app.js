@@ -1,7 +1,7 @@
 const express = require('express'); // importation d'express
 const mongoose = require('mongoose'); // importation de mongoose
-
 const app = express(); // appel de la méthode express - permet de créer une application express
+const userRoutes = require('./routes/user');
 
 mongoose.connect('mongodb+srv://Flo974:P6974@clusterp6.zs9g2at.mongodb.net/?retryWrites=true&w=majority',
   { useNewUrlParser: true,
@@ -9,7 +9,7 @@ mongoose.connect('mongodb+srv://Flo974:P6974@clusterp6.zs9g2at.mongodb.net/?retr
   .then(() => console.log('Connexion à MongoDB réussie !'))
   .catch(() => console.log('Connexion à MongoDB échouée !'));
 
-app.use(express.json());
+app.use(express.json()); // prend les requêtes qui ont comme Content-Type application/json et met à disposition leur body dans req.body
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*'); // permettre d'accéder à notre API depuis n'importe quelle origine
@@ -18,23 +18,6 @@ app.use((req, res, next) => {
     next();
   });
 
-app.use((req, res, next) => {
-    console.log('Requête reçue !');
-    next();
-});
-  
-app.use((req, res, next) => {
-    res.status(201);
-    next();
-});
-
-app.use((req, res, next) => { // use pour tout type de requête
-    res.json({ message: 'Votre requête a bien été reçue !' }); // renvoie d'une réponse en json
-    next();
-});
-
-app.use((req, res, next) => {
-    console.log('Réponse envoyée avec succès !');
-});
+app.use('/api/auth', userRoutes);
 
 module.exports = app; // export de l'application express pour l'utiliser dans les autres fichiers
