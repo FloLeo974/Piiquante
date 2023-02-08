@@ -1,9 +1,11 @@
+require('dotenv').config()
+
 const express = require('express'); // importation d'express
 const mongoose = require('mongoose'); // importation de mongoose
 const app = express(); // appel de la méthode express - permet de créer une application express
 const userRoutes = require('./routes/user');
 
-mongoose.connect('mongodb+srv://Flo974:P6974@clusterp6.zs9g2at.mongodb.net/?retryWrites=true&w=majority',
+mongoose.connect(`mongodb+srv://${process.env.MONGO_DB_USER}:${process.env.MONGO_DB_PASSWORD}@${process.env.MONGO_DB_CLUSTER}.mongodb.net/?retryWrites=true&w=majority`,
   { useNewUrlParser: true,
     useUnifiedTopology: true })
   .then(() => console.log('Connexion à MongoDB réussie !'))
