@@ -2,10 +2,12 @@ require('dotenv').config()
 
 const express = require('express'); // importation d'express
 const mongoose = require('mongoose'); // importation de mongoose
-const path = require('path');
 
 const userRoutes = require('./routes/user');
+const sauceRoutes = require('./routes/sauce');
+
 const app = express(); // appel de la méthode express - permet de créer une application express
+const path = require('path');
 
 mongoose.connect(`mongodb+srv://${process.env.MONGO_DB_USER}:${process.env.MONGO_DB_PASSWORD}@${process.env.MONGO_DB_CLUSTER}.mongodb.net/?retryWrites=true&w=majority`,
   { useNewUrlParser: true,
@@ -23,6 +25,7 @@ app.use((req, res, next) => {
   });
 
 app.use('/api/auth', userRoutes);
+app.use('/api/sauces', sauceRoutes);
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 module.exports = app; // export de l'application express pour l'utiliser dans les autres fichiers
