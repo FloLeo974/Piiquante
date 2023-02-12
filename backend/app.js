@@ -1,31 +1,44 @@
+// On importe nos variables d'environnement
 require('dotenv').config()
 
-const express = require('express'); // importation d'express
-const mongoose = require('mongoose'); // importation de mongoose
+// On importe le framework express
+const express = require('express');
+// On importe le package mongoose
+const mongoose = require('mongoose');
+// On importe path pour pouvoir accéder au path de notre serveur
+const path = require('path');
 
+// On importe nos routeurs
 const userRoutes = require('./routes/user');
 const sauceRoutes = require('./routes/sauce');
 
-const app = express(); // appel de la méthode express - permet de créer une application express
-const path = require('path');
+// On crée notre application express
+const app = express();
 
+// On connecte notre API à notre base de données MongoDB
 mongoose.connect(`mongodb+srv://${process.env.MONGO_DB_USER}:${process.env.MONGO_DB_PASSWORD}@${process.env.MONGO_DB_CLUSTER}.mongodb.net/?retryWrites=true&w=majority`,
   { useNewUrlParser: true,
     useUnifiedTopology: true })
   .then(() => console.log('Connexion à MongoDB réussie !'))
   .catch(() => console.log('Connexion à MongoDB échouée !'));
 
-app.use(express.json()); // prend les requêtes qui ont comme Content-Type application/json et met à disposition leur body dans req.body
+// On extrait le corps JSON des requêtes POST de Content-Type application/json pour accéder à leur contenu dans req.body
+app.use(express.json());
 
+// On évite les erreurs de CORS en ajoutant des headers de contrôle d'accès
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*'); // permettre d'accéder à notre API depuis n'importe quelle origine
-    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization'); // permettre d'ajouter les headers mentionnés aux requêtes envoyées vers notre API
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS'); // permettre d'envoyer des requêtes avec les méthodes mentionnées
+    res.setHeader('Access-Control-Allow-Origin', '*'); // On permet à tout le monde d'accéder à notre API
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content, Accept, Content-Type, Authorization'); // On ajoute les headers aux requêtes envoyées vers notre API
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS'); // On accepte les types de requêtes mentionnées
     next();
   });
 
+// On enregistre nos routeurs pour les demandes affectuées vers api/auth et api/sauces
 app.use('/api/auth', userRoutes);
 app.use('/api/sauces', sauceRoutes);
+
+// Ajout d'une route pour gérer les images de manière statique à chaque fois qu'elle reçoit une requête vers la route /images
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
-module.exports = app; // export de l'application express pour l'utiliser dans les autres fichiers
+// On exporte notre application express pour l'utiliser dans le fichier server.js
+module.exports = app;
