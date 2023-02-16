@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 /****** FONCTION SIGNUP ******/
+/* On crée une fonction qui permet à l'utilisateur s'enregistrer sur le site */
 exports.signup = (req, res, next) => {
     // On appelle la fonction de hachage de bcrypt et on « sale » le mot de passe 10 fois
     bcrypt.hash(req.body.password, 10)
@@ -24,6 +25,9 @@ exports.signup = (req, res, next) => {
 };
 
 /****** FONCTION LOGIN ******/
+/* On crée une fonction qui permet à l'utilisateur de se connecter avec ses identifiants,
+** de vérifier que ceux-ci sont bien présents dans notre base de données
+** et de lui fournir un token pour garantir son identité au cours de sa navigation */
 exports.login = (req, res, next) => {
     User.findOne({ email: req.body.email })
     .then(user => {

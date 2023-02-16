@@ -4,7 +4,8 @@ const Sauce = require('../models/sauce');
 const fs = require('fs');
 
 /****** FONCTION GET ALL SAUCE ******/
-// On renvoye un tableau contenant toutes les sauces de notre base de données
+/* On crée une fonction qui renvoie un tableau contenant toutes les sauces de notre base de données 
+** afin de les afficher */
 exports.getAllSauce = (req, res, next) => {
     Sauce.find()
     .then(sauces => res.status(200).json(sauces)) // "sauces" est le collection des "sauce" dans la base de données MongoDB
@@ -12,7 +13,8 @@ exports.getAllSauce = (req, res, next) => {
 };
 
 /****** FONCTION GET ONE SAUCE ******/
-// On renvoie la sauce ayant l'id du paramètre de la requête
+/* On crée une fonction qui renvoie la sauce ayant l'id du paramètre de la requête
+** afin de l'afficher */
 exports.getOneSauce = (req, res, next) => {
     Sauce.findOne({ _id: req.params.id })
     .then(sauce => res.status(200).json(sauce))
@@ -20,9 +22,10 @@ exports.getOneSauce = (req, res, next) => {
 };
 
 /****** FONCTION CREATE SAUCE ******/
-// On crée une instance de notre modèle sauce en supprimant au préalable l'id renvoyé par le frontend
+/* On crée une fonction qui permet de créer une instance de notre modèle sauce */
 exports.createSauce = (req, res, next) => {
     const sauceObject = JSON.parse(req.body.sauce);
+    // On supprime l'id renvoyé par le frontend
     delete sauceObject._id;
     // On supprime le champ _userId de la requête envoyée par le client car nous ne devons pas lui faire confiance
     delete sauceObject._userId;
@@ -40,6 +43,7 @@ exports.createSauce = (req, res, next) => {
 };
 
 /****** FONCTION MODIFY SAUCE ******/
+/* On crée une fonction qui permet au créateur d'une sauce d'en modifier les informations */
 exports.modifySauce = (req, res, next) => {
     // On récupère le contenu de la requête de 2 manières selon qu'elle contient un fichier ou pas
     const sauceObject = req.file ? {
@@ -63,6 +67,8 @@ exports.modifySauce = (req, res, next) => {
 };
 
 /****** FONCTION DELETE SAUCE ******/
+/* On crée une fonction qui supprime la sauce de la base de données 
+** ainsi que le fichier dans notre dossier images */
 exports.deleteSauce = (req, res, next) => {
     Sauce.findOne({ _id: req.params.id})
         .then(sauce => {
@@ -84,21 +90,75 @@ exports.deleteSauce = (req, res, next) => {
         .catch( error => res.status(500).json({ error }));
 };
 
-
-
-/* temporaire: a refaire en entier */
+/****** FONCTION LIKE OR DISLIKE SAUCE ******/
+/* On crée une fonction qui permet de compter les likes et les dislikes pour chaque sauce
+** et de mettre à jour le tableau des utilisateurs ayant likés ou dislikés dans notre base de données */
 exports.likeOrDislikeSauce = (req, res, next) => {
-    const sauceObject = JSON.parse(req.body.sauce);
-    delete sauceObject._id;
-    delete sauceObject._userId;
-    const sauce = new Sauce({
-        ...sauceObject,
-        userId: req.auth.userId,
-        imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-    });
-  
-    sauce.save()
-    .then(() => { res.status(201).json({message: 'A faire !'})})
-    .catch(error => { res.status(400).json( { error })})
+    // On récupère la sauce dans la base de données
+    Sauce.findOne({ _id: req.params.id })
+    .then(sauce => {
+        // Si l'utilisateur like
+        if (req.body.like === 1){
+            // S'il n'avait pas encore liké
+            if (!sauce.usersLiked.includes(req.body.userId)){
+                // On met à jour la sauce
+                Sauce.updateOne({ _id: req.params.id },{
+                    // Nombre de like: +1
+                    $inc: { likes: 1 },
+                    // Ajout de l'utilisateur au tableau des likes
+                    $push: { usersLiked: req.body.userId }
+                })
+                .then(() => res.status(201).json({ message: "Like prise en compte" }))
+                .catch(error => res.status(400).json(" error "));
+            }
+        }
+        else {
+            // Sinon si l'utilisateur ne vote pas (annule son vote)
+            if (req.body.like === 0){
+                // S'il avait liké
+                if (sauce.usersLiked.includes(req.body.userId)){
+                    // On met à jour la sauce
+                    Sauce.updateOne({ _id: req.params.id },{
+                        // Nombre de like: -1
+                        $inc: { likes: -1 },
+                        // Suppression de l'utilisateur dans le tableau des likes
+                        $pull: { usersLiked: req.body.userId }
+                    })
+                    .then(() => res.status(201).json({ message: "Like annulé" }))
+                    .catch(error => res.status(400).json(" error "));
+                }
+                // S'il avait disliké
+                if (sauce.usersDisliked.includes(req.body.userId)){
+                    // On met à jour la sauce
+                    Sauce.updateOne({ _id: req.params.id },{
+                        // Nombre de dislike: -1
+                        $inc: { dislikes: -1 },
+                        // Suppression de l'utilisateur dans le tableau des dislikes
+                        $pull: { usersDisliked: req.body.userId }
+                    })
+                    .then(() => res.status(201).json({ message: "Dislike annulé" }))
+                    .catch(error => res.status(400).json(" error "));
+                }
+            }
+            // Sinon si l'utilisateur dislike
+            else {
+                if (req.body.like === -1){
+                    // S'il n'avait pas encore disliké
+                    if (!sauce.usersDisliked.includes(req.body.userId)){
+                        // On met à jour la sauce
+                        Sauce.updateOne({ _id: req.params.id },{
+                            // Nombre de dislike: +1
+                            $inc: { dislikes: 1 },
+                            // Ajout de l'utilisateur dans le tableau des dislikes
+                            $push: { usersDisliked: req.body.userId }
+                        })
+                        .then(() => res.status(201).json({ message: "Dislike prise en compte" }))
+                        .catch(error => res.status(400).json(" error "));
+                    }
+                }
+            }
+        }
+    })
+    .catch(error => res.status(404).json({ error }));
   };
   
