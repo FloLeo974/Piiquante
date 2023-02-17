@@ -1,12 +1,12 @@
 - Dans un premier terminal tapez les commandes suivantes:
 
 cd frontend
-npm install
 npm start
 
 - Dans un deuxième terminal tapez les commandes suivantes:
 
 cd backend
+npm install
 node server 
 
 - Naviguer sur http://localhost:4200/
